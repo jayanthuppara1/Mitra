@@ -8,30 +8,25 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Get current session on load
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       setLoading(false)
     })
 
+    // Listen for sign in / sign out
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        const currentUser = session?.user ?? null
-        setUser(currentUser)
-
-        if (event === 'SIGNED_IN' && currentUser) {
-          await supabase.from('users').upsert({
-            id: currentUser.id,
-            email: currentUser.email,
-            display_name: currentUser.email.split('@')[0],
-          }, { onConflict: 'id' })
-        }
+      (_event, session) => {
+        setUser(session?.user ?? null)
       }
     )
 
     return () => subscription.unsubscribe()
   }, [])
 
-  const signOut = () => supabase.auth.signOut()
+  const signOut = async () => {
+    await supabase.auth.signOut()
+  }
 
   return (
     <AuthContext.Provider value={{ user, loading, signOut }}>
