@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { useNavigate, Navigate } from 'react-router-dom'
+import { useNavigate, Navigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const next = searchParams.get('next') || '/dashboard'
   const { user, loading: authLoading } = useAuth()
   const [isSignup, setIsSignup] = useState(false)
   const [email, setEmail] = useState('')
@@ -55,7 +57,7 @@ export default function Login() {
     }
 
     setLoading(false)
-    navigate('/dashboard', { replace: true })
+    navigate(next, { replace: true })
   }
 
   return (

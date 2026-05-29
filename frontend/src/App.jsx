@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import CreateRoom from './pages/CreateRoom'
 import RoomDetail from './pages/RoomDetail'
+import JoinRoom from './pages/JoinRoom'
 
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/join/:code" element={<JoinRoom />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </AuthProvider>
