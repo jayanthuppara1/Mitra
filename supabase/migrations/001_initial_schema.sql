@@ -1,3 +1,16 @@
+-- Helper function to check room membership without triggering RLS recursion
+create or replace function public.is_room_member(room_uuid uuid)
+returns boolean
+language sql
+security definer
+stable
+as $$
+  select exists (
+    select 1 from public.room_members
+    where room_id = room_uuid and user_id = auth.uid()
+  );
+$$;
+
 -- Drop existing policies to allow idempotent re-runs
 drop policy if exists "Users can read any profile" on public.users;
 drop policy if exists "Users can update own profile" on public.users;
@@ -10,6 +23,7 @@ drop policy if exists "Members can view room membership" on public.room_members;
 drop policy if exists "Room creator can insert members" on public.room_members;
 drop policy if exists "Members can update own membership" on public.room_members;
 drop policy if exists "Admins can remove members" on public.room_members;
+drop policy if exists "Members can remove own membership" on public.room_members;
 
 -- Users profile table (mirrors auth.users)
 create table if not exists public.users (
@@ -54,11 +68,7 @@ create policy "Members can view their rooms"
   on public.rooms for select
   using (
     auth.uid() = created_by
-    or exists (
-      select 1 from public.room_members
-      where room_members.room_id = rooms.id
-        and room_members.user_id = auth.uid()
-    )
+    or public.is_room_member(id)
   );
 
 create policy "Authenticated users can create rooms"
@@ -67,25 +77,11 @@ create policy "Authenticated users can create rooms"
 
 create policy "Admins can update their rooms"
   on public.rooms for update
-  using (
-    exists (
-      select 1 from public.room_members
-      where room_members.room_id = rooms.id
-        and room_members.user_id = auth.uid()
-        and room_members.role = 'admin'
-    )
-  );
+  using (auth.uid() = created_by);
 
 create policy "Admins can delete their rooms"
   on public.rooms for delete
-  using (
-    exists (
-      select 1 from public.room_members
-      where room_members.room_id = rooms.id
-        and room_members.user_id = auth.uid()
-        and room_members.role = 'admin'
-    )
-  );
+  using (auth.uid() = created_by);
 
 -- Room members table
 create table if not exists public.room_members (
@@ -102,38 +98,16 @@ alter table public.room_members enable row level security;
 
 create policy "Members can view room membership"
   on public.room_members for select
-  using (
-    exists (
-      select 1 from public.room_members rm
-      where rm.room_id = room_members.room_id
-        and rm.user_id = auth.uid()
-    )
-  );
+  using (public.is_room_member(room_id));
 
 create policy "Room creator can insert members"
   on public.room_members for insert
-  with check (
-    auth.uid() = user_id
-    or exists (
-      select 1 from public.room_members rm
-      where rm.room_id = room_members.room_id
-        and rm.user_id = auth.uid()
-        and rm.role = 'admin'
-    )
-  );
+  with check (auth.uid() = user_id);
 
 create policy "Members can update own membership"
   on public.room_members for update
   using (auth.uid() = user_id);
 
-create policy "Admins can remove members"
+create policy "Members can remove own membership"
   on public.room_members for delete
-  using (
-    auth.uid() = user_id
-    or exists (
-      select 1 from public.room_members rm
-      where rm.room_id = room_members.room_id
-        and rm.user_id = auth.uid()
-        and rm.role = 'admin'
-    )
-  );
+  using (auth.uid() = user_id);
