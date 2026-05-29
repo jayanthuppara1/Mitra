@@ -1,5 +1,5 @@
 -- Helper function to check room membership without triggering RLS recursion
-drop function if exists public.is_room_member(uuid);
+drop function if exists public.is_room_member(uuid) cascade;
 create or replace function public.is_room_member(room_uuid uuid)
 returns boolean
 language sql
