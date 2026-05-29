@@ -1,19 +1,29 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Navigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const next = searchParams.get('next') || '/dashboard'
+  const { user, loading: authLoading } = useAuth()
   const [isSignup, setIsSignup] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
+
+  if (!authLoading && user) {
+    return <Navigate to="/dashboard" replace />
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setMessage('')
 
     if (isSignup) {
       const { data, error } = await supabase.auth.signUp({ email, password })
@@ -22,13 +32,20 @@ export default function Login() {
         setLoading(false)
         return
       }
-      // Create user profile row
       if (data.user) {
-        await supabase.from('users').upsert({
+        const { error: upsertError } = await supabase.from('users').upsert({
           id: data.user.id,
           email: data.user.email,
           display_name: email.split('@')[0],
         }, { onConflict: 'id' })
+        if (upsertError) {
+          console.error('Profile creation failed:', upsertError.message)
+        }
+      }
+      if (!data.session) {
+        setMessage('Check your email for a confirmation link before signing in.')
+        setLoading(false)
+        return
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -39,7 +56,8 @@ export default function Login() {
       }
     }
 
-    navigate('/dashboard', { replace: true })
+    setLoading(false)
+    navigate(next, { replace: true })
   }
 
   return (
@@ -82,6 +100,10 @@ export default function Login() {
             <p className="text-red-400 text-sm">{error}</p>
           )}
 
+          {message && (
+            <p className="text-green-400 text-sm">{message}</p>
+          )}
+
           <button
             type="submit"
             disabled={loading}
@@ -94,7 +116,7 @@ export default function Login() {
         </form>
 
         <button
-          onClick={() => { setIsSignup(!isSignup); setError('') }}
+          onClick={() => { setIsSignup(!isSignup); setError(''); setMessage('') }}
           className="mt-6 w-full text-center text-sm text-gray-500 hover:text-gray-300 transition"
         >
           {isSignup
