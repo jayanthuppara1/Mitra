@@ -1,3 +1,16 @@
+-- Drop existing policies to allow idempotent re-runs
+drop policy if exists "Users can read any profile" on public.users;
+drop policy if exists "Users can update own profile" on public.users;
+drop policy if exists "Users can insert own profile" on public.users;
+drop policy if exists "Members can view their rooms" on public.rooms;
+drop policy if exists "Authenticated users can create rooms" on public.rooms;
+drop policy if exists "Admins can update their rooms" on public.rooms;
+drop policy if exists "Admins can delete their rooms" on public.rooms;
+drop policy if exists "Members can view room membership" on public.room_members;
+drop policy if exists "Room creator can insert members" on public.room_members;
+drop policy if exists "Members can update own membership" on public.room_members;
+drop policy if exists "Admins can remove members" on public.room_members;
+
 -- Users profile table (mirrors auth.users)
 create table if not exists public.users (
   id uuid primary key references auth.users(id) on delete cascade,
