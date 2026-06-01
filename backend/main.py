@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="Mithra API", version="0.1.0")
+app = FastAPI(title="Mitra API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -13,4 +13,4 @@ app.add_middleware(
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "mithra-api"}
+    return {"status": "ok", "service": "mitra-api"}
