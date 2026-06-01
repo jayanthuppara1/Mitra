@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Navigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -64,7 +64,7 @@ export default function Login() {
     <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
       <div className="w-full max-w-sm px-6">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">Mithra</h1>
+          <h1 className="text-3xl font-bold">Mitra</h1>
           <p className="mt-2 text-gray-400 text-sm">
             Plan together. Live together. Remember together.
           </p>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 import { supabase } from '../lib/supabase'
 
 export default function JoinRoom() {
@@ -20,10 +20,7 @@ export default function JoinRoom() {
 
     const fetchRoom = async () => {
       const { data, error } = await supabase
-        .from('rooms')
-        .select('id, title, description, location, start_date, end_date')
-        .eq('invite_code', code)
-        .is('deleted_at', null)
+        .rpc('get_room_by_invite_code', { code })
         .maybeSingle()
 
       if (error || !data) {
