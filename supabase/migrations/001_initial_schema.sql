@@ -213,7 +213,7 @@ set search_path = public
 as $$
   select r.id, r.title, r.description, r.location, r.start_date, r.end_date
   from public.rooms r
-  where r.invite_code = code
+  where r.invite_code::text = code
     and r.deleted_at is null
   limit 1;
 $$;
